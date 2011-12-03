@@ -2,9 +2,11 @@
 import System( getArgs )
 import Debug.Trace
 
+
 data CharClass =
 	Numeric | Operator | OpeningParanthesis  | ClosingParanthesis | Alphabetic | Unknown
 	deriving (Enum, Eq)
+
 
 classify :: Char -> CharClass
 classify c
@@ -33,7 +35,8 @@ takeWhile2 p l@(x:xs)
 	| otherwise = ( [], l )
 
 
-processOper :: (CharClass, String) -> [ (CharClass, String) ] -> [ (CharClass, String) ] -> ( [ (CharClass, String) ], [ (CharClass, String) ] )
+processOper :: (CharClass, String) -> [ (CharClass, String) ] ->
+	[ (CharClass, String) ] -> ( [ (CharClass, String) ], [ (CharClass, String) ] )
 processOper input_head queue stack@(stack_top:stack_rest) =
 	let
 		(tokType, stack_op) = stack_top
