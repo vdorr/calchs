@@ -2,24 +2,17 @@
 import System( getArgs )
 import Debug.Trace
 
-numeral :: Int
-numeral = 1
-operator :: Int
-operator = 2
-openingParenthesis = 3
-closingParenthesis = 4
-unknownClass = 666
-
 data CharClass =
-	Numeric | Operator | OpeningParanthesis  | ClosingParanthesis | Alphabetic deriving (Enum)
+	Numeric | Operator | OpeningParanthesis  | ClosingParanthesis | Alphabetic | Unknown
+	deriving (Enum, Eq)
 
-classify :: Char -> Int
+classify :: Char -> CharClass
 classify c
-	| c == '(' = openingParenthesis
-	| c == ')' = closingParenthesis
-	| c >= '0' && c <= '9' || c == '.' = numeral
-	| elem c "+-*/^" = operator
-	| otherwise = unknownClass
+	| c == '(' = OpeningParanthesis
+	| c == ')' = ClosingParanthesis
+	| c >= '0' && c <= '9' || c == '.' = Numeric
+	| elem c "+-*/^" = Operator
+	| otherwise = Unknown
 
 
 operPrio :: String -> Int
@@ -40,39 +33,39 @@ takeWhile2 p l@(x:xs)
 	| otherwise = ( [], l )
 
 
-processOper :: (Int, String) -> [ (Int, String) ] -> [ (Int, String) ] -> ( [ (Int, String) ], [ (Int, String) ] )
+processOper :: (CharClass, String) -> [ (CharClass, String) ] -> [ (CharClass, String) ] -> ( [ (CharClass, String) ], [ (CharClass, String) ] )
 processOper input_head queue stack@(stack_top:stack_rest) =
 	let
 		(tokType, stack_op) = stack_top
 		(_, op) = input_head --traceShow input_head 
 	in
-		if tokType == 2 && ( operPrio stack_op ) > ( operPrio op ) then
+		if tokType == Operator && ( operPrio stack_op ) > ( operPrio op ) then
 			processOper input_head (queue ++ [stack_top]) stack_rest
 		else (queue, [input_head]++stack) --traceShow input_head 
 processOper input_head queue [] = (queue++[], [input_head])
 
 
-processClosingParenthesis :: [ (Int, String) ] -> [ (Int, String) ] -> ( [ (Int, String) ], [ (Int, String) ] )
+processClosingParenthesis :: [ (CharClass, String) ] -> [ (CharClass, String) ] -> ( [ (CharClass, String) ], [ (CharClass, String) ] )
 processClosingParenthesis queue stack = 
 	let (to_queue, (_:stack_rest)) = takeWhile2 (\(_,t) -> t /= "(") stack
 	in ((queue++to_queue), stack_rest)
 
 
-toRPN :: [ (Int, String) ] -> [ (Int, String) ] -> [ (Int, String) ] -> ( [ (Int, String) ], [ (Int, String) ] )
+toRPN :: [ (CharClass, String) ] -> [ (CharClass, String) ] -> [ (CharClass, String) ] -> ( [ (CharClass, String) ], [ (CharClass, String) ] )
 toRPN input@(s:xs) queue stack =
 	let (tokType, _) = s
 	in case tokType of
-		1 -> toRPN xs (queue ++ [s]) stack
-		2 -> let (qu, st) = processOper s queue stack
+		Numeric -> toRPN xs (queue ++ [s]) stack
+		Operator -> let (qu, st) = processOper s queue stack
 			in  toRPN xs qu st
-		3 -> toRPN xs queue (stack ++ [s])
-		4 -> let (qu, st) = processClosingParenthesis queue stack
+		OpeningParanthesis -> toRPN xs queue (stack ++ [s])
+		ClosingParanthesis -> let (qu, st) = processClosingParenthesis queue stack
 			in  toRPN xs qu st
 
 toRPN [] queue stack = ( queue++stack, [] )
 
 
-convertToRPN :: [ (Int, String) ] -> [ (Int, String) ]
+convertToRPN :: [ (CharClass, String) ] -> [ (CharClass, String) ]
 convertToRPN input =
 	let (queue, _) = toRPN input [] []
 	in queue
@@ -98,8 +91,8 @@ operApplyOnStack (x:_) _ = [x]
 evalRPN tokens@(s:xs) stack =
 	let (tokType, tok) = s
 	in case tokType of
-		1 ->  evalRPN xs ( [ read tok :: Float ] ++ stack )
-		2 -> evalRPN xs ( operApplyOnStack stack tok )
+		Numeric -> evalRPN xs ( [ read tok :: Float ] ++ stack )
+		Operator -> evalRPN xs ( operApplyOnStack stack tok )
 evalRPN [] stack = stack
 
 
@@ -108,11 +101,11 @@ evaluateRPN tokens =
 	in result
 
 
-tokenize ::  String -> [ (Int, String) ]
+tokenize ::  String -> [ (CharClass, String) ]
 tokenize (s:xs) =
 	let
 		cls = classify s
-		(tok, rest) = takeWhile2 (\c -> c == ' ' || cls == classify c) xs
+		(tok, rest) = takeWhile2 (\c -> c == ' ' || cls == (classify c)) xs
 	in
 		(cls, (s:tok)) : tokenize rest
 tokenize [] = []
