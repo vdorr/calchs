@@ -35,8 +35,8 @@ takeWhile2 p l@(x:xs)
 	| otherwise = ( [], l )
 
 
-processOper :: (CharClass, String) -> [ (CharClass, String) ] ->
-	[ (CharClass, String) ] -> ( [ (CharClass, String) ], [ (CharClass, String) ] )
+processOper :: (CharClass, String) -> [ (CharClass, String) ] -> [ (CharClass, String) ] ->
+	( [ (CharClass, String) ], [ (CharClass, String) ] )
 processOper input_head queue stack@(stack_top:stack_rest) =
 	let
 		(tokType, stack_op) = stack_top
@@ -48,13 +48,15 @@ processOper input_head queue stack@(stack_top:stack_rest) =
 processOper input_head queue [] = (queue++[], [input_head])
 
 
-processClosingParenthesis :: [ (CharClass, String) ] -> [ (CharClass, String) ] -> ( [ (CharClass, String) ], [ (CharClass, String) ] )
+processClosingParenthesis :: [ (CharClass, String) ] -> [ (CharClass, String) ] ->
+	( [ (CharClass, String) ], [ (CharClass, String) ] )
 processClosingParenthesis queue stack = 
 	let (to_queue, (_:stack_rest)) = takeWhile2 (\(_,t) -> t /= "(") stack
 	in ((queue++to_queue), stack_rest)
 
 
-toRPN :: [ (CharClass, String) ] -> [ (CharClass, String) ] -> [ (CharClass, String) ] -> ( [ (CharClass, String) ], [ (CharClass, String) ] )
+toRPN :: [ (CharClass, String) ] -> [ (CharClass, String) ] -> [ (CharClass, String) ] ->
+	( [ (CharClass, String) ], [ (CharClass, String) ] )
 toRPN input@(s:xs) queue stack =
 	let (tokType, _) = s
 	in case tokType of
