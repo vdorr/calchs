@@ -10,7 +10,8 @@ openingParenthesis = 3
 closingParenthesis = 4
 unknownClass = 666
 
-data MyDataType = Foo | Bar | Baz deriving (Enum)
+data CharClass =
+	Numeric | Operator | OpeningParanthesis  | ClosingParanthesis | Alphabetic deriving (Enum)
 
 classify :: Char -> Int
 classify c
@@ -71,8 +72,8 @@ toRPN input@(s:xs) queue stack =
 toRPN [] queue stack = ( queue++stack, [] )
 
 
-converToRPN :: [ (Int, String) ] -> [ (Int, String) ]
-converToRPN input =
+convertToRPN :: [ (Int, String) ] -> [ (Int, String) ]
+convertToRPN input =
 	let (queue, _) = toRPN input [] []
 	in queue
 
@@ -118,7 +119,7 @@ tokenize [] = []
 
 
 eval expr =
-	putStrLn $ expr ++ " = " ++ (show.evaluateRPN.converToRPN.tokenize) expr
+	putStrLn $ expr ++ " = " ++ (show.evaluateRPN.convertToRPN.tokenize) expr
 
 
 mainLoop :: IO ()
