@@ -1,6 +1,8 @@
 
 import System( getArgs )
 import Debug.Trace
+import IO( isEOFError )
+import Data.Maybe
 
 
 data CharClass =
@@ -66,7 +68,6 @@ toRPN input@(s:xs) queue stack =
 		OpeningParanthesis -> toRPN xs queue (stack ++ [s])
 		ClosingParanthesis -> let (qu, st) = processClosingParenthesis queue stack
 			in  toRPN xs qu st
-
 toRPN [] queue stack = ( queue++stack, [] )
 
 
@@ -120,14 +121,20 @@ eval expr =
 	putStrLn $ expr ++ " = " ++ (show.evaluateRPN.convertToRPN.tokenize) expr
 
 
+readLine :: IO (Maybe String)
+readLine = do
+	a <- (catch getLine (\e -> return ""))
+	return $ if a == "" then Nothing else Just a
+
+
 mainLoop :: IO ()
 mainLoop = do
-	a <- getLine
-	if a /= "q" then do
-		eval a
-		mainLoop
-	else
+	a <- readLine
+	if (isNothing a) || (fromJust a) == "q" then
 		putStrLn "bye"
+	else do
+		eval (fromJust a)
+		mainLoop
 
 
 main :: IO ()
