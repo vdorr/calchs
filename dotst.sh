@@ -1,0 +1,1 @@
+grep "" exprs.txt | ./tst
